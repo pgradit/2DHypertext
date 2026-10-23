@@ -1,4 +1,4 @@
-# Hypertexte bidimensionnel
+# Hypertexte Bidimensionnel
 
 Série d'articles de Pierre Gradit sur une version bidimensionnelle de l'hypertexte
 de Ted Nelson (Xanadu), construite avec le truchement de pavages de Truchet–Smith.
