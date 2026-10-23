@@ -3,6 +3,18 @@
 Série d'articles de Pierre Gradit sur une version bidimensionnelle de l'hypertexte
 de Ted Nelson (Xanadu), construite avec le truchement de pavages de Truchet–Smith.
 
+## L'argument
+
+**Sans intérieur, pas de sécurité.** Sans intérieur, il n'y a ni soi ni non-soi :
+un système qui ne sait pas ce qui lui appartient ne peut rien défendre.
+
+Xanadu pensait l'hypertexte en trois dimensions, où une courbe fermée ne sépare
+rien. Dans le plan, elle sépare un dedans d'un dehors (théorème de Jordan) :
+c'est la raison du passage à deux dimensions.
+
+Il peut y avoir de multiples plans, de multiples sphères, avec des hyperliens
+entre eux. Mais chaque plan sait où est soi.
+
 | Papier | Sujet | Source | Animation |
 | --- | --- | --- | --- |
 | 0. Messagerie | langage de messagerie au caractère, transclusion 2D, hashes, opérateurs `@>` et `@>>`, Akoma Ntoso | [`papier-0-messagerie/messagerie.tex`](papier-0-messagerie/messagerie.tex) | — |
