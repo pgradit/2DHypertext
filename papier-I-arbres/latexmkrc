@@ -1,0 +1,4 @@
+# Compilation : latexmk   (XeLaTeX ; le style commun est dans ../commun)
+$pdf_mode = 5;
+$ENV{'TEXINPUTS'} = '../commun//:' . ($ENV{'TEXINPUTS'} // '');
+@default_files = ('arbres.tex');

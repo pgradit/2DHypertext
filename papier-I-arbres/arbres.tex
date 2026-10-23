@@ -1,0 +1,632 @@
+% Pavages de Smith et hypertexte bidimensionnel. I. Arbres
+% Compilation : latexmk (voir latexmkrc) — XeLaTeX ou LuaLaTeX.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{french}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{fancyvrb}
+\usepackage{caption,subcaption}
+\usepackage{enumitem}
+\usepackage{csquotes}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{smith}
+
+\captionsetup{font=small,labelfont=bf}
+\setlength{\emergencystretch}{1.5em}
+\newtheorem{theoreme}{Théorème}
+\newtheorem{lemme}{Lemme}
+\theoremstyle{remark}
+\newtheorem*{remarque}{Remarque}
+
+\newcommand{\urlanimation}{https://pgradit.github.io/2DHypertext/papier-I-arbres/deformation.html}
+\newcommand{\balise}[1]{\texttt{#1}}
+\newcommand{\fig}[1]{\input{figures/#1}}
+
+\title{Pavages de Smith et hypertexte bidimensionnel\\[.3em]
+       \large I.~Arbres}
+\author{Pierre Gradit}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Un document XML bien formé se plonge dans un pavage du plan par neuf tuiles
+carrées. Deux lectures de ce pavage, la version graphe et la version disque,
+sont duales l'une de l'autre, et une seule règle locale, \papin, appliquée tuile
+par tuile, fait passer de l'une à l'autre. La version disque est un disque de
+Poincaré à géodésiques intérieures injectives, forme canonique du document ; une
+isotopie du plan la relie au pavage.
+\end{abstract}
+
+% =========================================================================
+\section*{Introduction}
+
+Le projet Xanadu de Ted Nelson concevait l'hypertexte comme une structure de
+liens et de transclusions entre documents. Nous en cherchons une version
+bidimensionnelle. L'idée directrice est d'exploiter une notion topologique
+d'intérieur et d'extérieur, pour obtenir une architecture sûre par construction
+(\emph{security-by-design}).
+
+Le point de départ est le pavage de Truchet, tel que C.~S.~Smith l'a
+réinterprété avec des quarts de cercle. Nous lui ajoutons une tuile marquée,
+\CONNECT, qui porte les arêtes. Les tuiles suffisent à représenter un arbre
+comme une carte combinatoire de dimension~2, avec son orientation.
+
+Ce papier se limite aux arbres. Les géodésiques extérieures, le double disque et
+les cartes planaires générales sont l'objet du papier~II. Le texte des éléments
+n'est pas traité ici : il est porté par la courbe rouge, et sa réécriture au
+caractère relève du papier compagnon sur le langage de messagerie.
+
+Le plan suit l'ordre dans lequel un lecteur découvre l'objet. On présente les
+tuiles (§\ref{s:tuiles}), puis on plonge l'XML comme un humain le dessinerait
+spontanément, sous forme de graphe (§\ref{s:graphe}). On lit ce dessin comme une
+carte combinatoire (§\ref{s:carte}), on introduit la dualité (§\ref{s:dualite})
+et sa forme locale \papin\ (§\ref{s:papin}), puis on obtient la version disque
+(§\ref{s:disque}). La partie se conclut par l'existence d'une déformation
+continue entre pavage et disque (§\ref{s:deformation}).
+
+% =========================================================================
+\section{Les tuiles}\label{s:tuiles}
+
+Neuf tuiles carrées, assemblées selon une règle de Wang, suffisent à tout le
+papier. Elles dérivent de la tuile de Smith.
+
+\subsection{De Truchet à Smith}
+
+La tuile de Truchet est un carré coupé selon une diagonale en deux triangles de
+couleurs différentes. C.~S.~Smith remplace cette coupe par deux quarts de cercle.
+Chacun relie les milieux de deux côtés adjacents et a pour centre le coin qu'ils
+encadrent.
+
+Les deux arcs sont centrés en deux coins opposés. Il y a donc deux orientations,
+et un bit par tuile. Chaque arc coupe les côtés à angle droit, en leur milieu.
+
+Une tuile de Smith est ainsi un petit disque à quatre points sur son bord. Ses
+deux orientations sont les deux appariements non croisés de ces quatre points ;
+le troisième appariement, la croix, est exclu.
+
+\subsection{Les neuf tuiles}
+
+On appelle \emph{courbes rouges} les arcs et segments portés par les tuiles, et
+\emph{barre noire} le segment propre à \CONNECT\ (figure~\ref{f:tuiles}).
+
+\begin{figure}[ht]
+  \centering
+  \fig{fig-tuiles}
+  \caption{Les neuf tuiles : \CONNECT\ (2 rotations), \DROIT\ (2), \VIDE\ (1)
+    et \VIRAGE\ (4).}
+  \label{f:tuiles}
+\end{figure}
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+  \toprule
+  Tuile & Rotations & Côtés traversés & Contenu \\
+  \midrule
+  \CONNECT & 2 & 4 & tuile de Smith et barre noire courte \\
+  \VIRAGE  & 4 & 2, adjacents & un quart de cercle \\
+  \DROIT   & 2 & 2, opposés & un segment entre milieux opposés \\
+  \VIDE    & 1 & 0 & rien \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+La barre noire de \CONNECT\ est portée par la diagonale qui joint les centres des
+deux arcs. Elle chevauche les deux arcs un peu au-delà de leurs points de
+croisement, puis s'arrête avant les coins : elle reste intérieure à la tuile.
+
+\subsection{Règle d'assemblage}
+
+Chaque côté porte une couleur parmi deux : son milieu est traversé par une
+courbe rouge, ou il ne l'est pas. Deux tuiles voisines doivent porter la même
+couleur sur leur côté commun. Les neuf tuiles forment ainsi un jeu de tuiles de
+Wang.
+
+Cette seule règle garantit que les courbes rouges se prolongent d'une tuile à
+l'autre. Dans tout assemblage, elles sont simples, lisses et deux à deux
+disjointes. Chacune est fermée, ou se termine au bord de la région pavée.
+
+\subsection{Lecture par les coins}
+
+Marquons chaque coin de tuile « dedans » ou « dehors ». Une courbe rouge sépare
+deux coins voisins exactement quand leurs marques diffèrent. Le type de chaque
+tuile se lit alors sur ses quatre coins :
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  Coins « dedans » & Tuile \\
+  \midrule
+  aucun, ou les quatre & \VIDE \\
+  un seul, ou trois & \VIRAGE \\
+  deux adjacents & \DROIT \\
+  deux opposés & \CONNECT \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Le marquage détermine tout le pavage, sauf l'orientation des tuiles \CONNECT. Ce
+bit restant dit lequel des deux couples de coins opposés est relié par la bande
+comprise entre les arcs. C'est lui qui portera la dualité (§\ref{s:papin}).
+
+% =========================================================================
+\section{Plongement de l'XML : la version graphe}\label{s:graphe}
+
+Un arbre XML se plonge dans le pavage en donnant à chaque nœud une boucle rouge
+et à chaque lien parent–enfant une tuile \CONNECT. C'est le dessin qu'un humain
+fait spontanément, par culture de la théorie des graphes, consciente ou non.
+
+\subsection{L'exemple jouet}
+
+Nous suivons un seul exemple tout au long du papier. Le texte entre balises est
+ignoré.
+
+\begin{Verbatim}[xleftmargin=2em,fontsize=\small]
+<html>
+  <head><title></title></head>
+  <body><h1></h1><p></p></body>
+</html>
+\end{Verbatim}
+
+Son arbre a sept nœuds : le document, racine implicite, puis \balise{html},
+\balise{head}, \balise{title}, \balise{body}, \balise{h1} et \balise{p}. Il a six
+liens parent–enfant, un par élément.
+
+\subsection{Construction}
+
+On réserve un coin « dedans » par nœud. Deux nœuds liés occupent deux coins
+voisins en diagonale. Aucune autre paire de coins « dedans » n'est voisine, ni
+par un côté ni en diagonale.
+
+Pour l'exemple, un pavage de $5\times 6$ tuiles suffit. Les coins sont repérés
+par (colonne, ligne), de $(0,0)$ en haut à gauche à $(5,6)$.
+
+\begin{center}
+\begin{tabular}{@{}lcl@{}}
+  \toprule
+  Nœud & Coin & Parent \\
+  \midrule
+  document      & $(1,2)$ & --- \\
+  \balise{html}  & $(2,3)$ & document \\
+  \balise{head}  & $(3,2)$ & \balise{html} \\
+  \balise{title} & $(4,1)$ & \balise{head} \\
+  \balise{body}  & $(3,4)$ & \balise{html} \\
+  \balise{h1}    & $(4,5)$ & \balise{body} \\
+  \balise{p}     & $(2,5)$ & \balise{body} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+La lecture par les coins détermine alors chaque tuile. Chaque lien donne une
+tuile \CONNECT. On l'oriente de sorte que ses arcs entourent les deux coins
+« dedans » : la bande entre les arcs joint les deux coins « dehors », et la barre
+noire va d'une boucle à l'autre.
+
+\subsection{Résultat}
+
+Chaque nœud est entouré d'une petite boucle rouge fermée
+(figure~\ref{f:graphe}). Chaque barre noire relie la boucle du parent à celle de
+l'enfant, et porte le nom de l'enfant : \balise{html} relie le document à
+\balise{html}, \balise{head} relie \balise{html} à \balise{head}, et ainsi de
+suite.
+
+\begin{figure}[ht]
+  \centering
+  \fig{fig-graphe}
+  \caption{L'exemple jouet en version graphe : sept boucles rouges, six tuiles
+    \CONNECT. Le spin du vide \spin\ occupe la tuile \VIDE\ en haut à gauche.}
+  \label{f:graphe}
+\end{figure}
+
+Le pavage compte 30 tuiles : 6 \CONNECT, 16 \VIRAGE, 8 \VIDE\ et aucune \DROIT.
+La tuile \DROIT\ apparaît dès qu'un nœud occupe plusieurs coins, par exemple pour
+loger son texte.
+
+Les noms sont posés parallèlement aux barres, à $+45^\circ$ ou $-45^\circ$, dans
+le sens qui se lit, à écart constant de la barre. Le texte des éléments, lui,
+est porté par les courbes rouges ; il relève du papier compagnon.
+
+% =========================================================================
+\section{Carte combinatoire et spin du vide}\label{s:carte}
+
+Le pavage en version graphe se lit comme une carte combinatoire orientée de
+dimension~2. L'orientation est fixée par un seul symbole, \spin\ (U+2941), posé
+dans une tuile \VIDE\ extérieure.
+
+\subsection{Rappels}
+
+Une carte combinatoire est un triplet $(D,\sigma,\alpha)$. $D$ est un ensemble
+fini de brins, ou demi-arêtes. $\sigma$ est une permutation de $D$ dont les
+cycles sont les sommets. $\alpha$ est une involution sans point fixe dont les
+cycles sont les arêtes. Les faces sont les cycles de la permutation dérivée
+\[
+  \varphi = \sigma\circ\alpha .
+\]
+En notant $V$, $E$ et $F$ les nombres de cycles de $\sigma$, $\alpha$ et
+$\varphi$, une carte connexe vérifie la formule d'Euler
+\[
+  V - E + F = 2 - 2g ,
+\]
+et elle est planaire quand le genre $g$ est nul. La notation de Lienhardt,
+reprise par CGAL, écrit la même structure avec $\beta_1=\varphi$ et
+$\beta_2=\alpha$.
+
+\subsection{Le spin du vide}
+
+Une carte combinatoire est toujours orientée : $\sigma$ tourne dans un sens, et
+le sens opposé donne $\sigma^{-1}$, la carte miroir. Le pavage doit donc porter
+ce choix. Nous le plaçons dans une tuile \VIDE\ extérieure, sous la forme du
+symbole \spin, flèche circulaire fermée dans le sens horaire.
+
+Ce placement a un avantage décisif. La règle \papin\ du §\ref{s:papin} ne
+touche que les tuiles \CONNECT : l'orientation reste donc la même avant et après
+la dualité.
+
+\subsection{Lecture du pavage}
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  Carte & Pavage \\
+  \midrule
+  sommet & boucle rouge \\
+  brin & extrémité d'une barre noire, là où elle chevauche une boucle \\
+  arête ($\alpha$) & les deux extrémités d'une même barre \\
+  rotation ($\sigma$) & ordre des brins le long d'une boucle, dans le sens de \spin \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{L'exemple}
+
+Les douze brins sont numérotés de 0 à 11. La numérotation est choisie pour
+coïncider avec l'ordre des balises du document, ce que le §\ref{s:disque}
+justifie.
+\begin{align*}
+  \alpha   &= (0\;11)(1\;4)(2\;3)(5\;10)(6\;7)(8\;9),\\
+  \sigma_g &= (0)(1\;5\;11)(2\;4)(3)(6\;8\;10)(7)(9).
+\end{align*}
+Chaque arête a un brin sur la boucle du parent et un sur celle de l'enfant. Par
+exemple, la barre \balise{head} a le brin~1 sur la boucle de \balise{html} et le
+brin~4 sur celle de \balise{head}. Autour de \balise{html}, dans le sens horaire,
+on rencontre \balise{head} (brin~1), \balise{body} (brin~5) puis le document
+(brin~11).
+
+Le calcul de $\varphi$ donne une seule face, le tour complet de l'arbre :
+\[
+  \varphi_g = \sigma_g\circ\alpha = (0\;1\;2\;3\;4\;5\;6\;7\;8\;9\;10\;11).
+\]
+On vérifie $7-6+1=2$ : la carte est planaire, et c'est un arbre plan.
+
+% =========================================================================
+\section{Dualité}\label{s:dualite}
+
+La carte duale échange sommets et faces en gardant les mêmes brins et les mêmes
+arêtes. Appliquée à la version graphe, elle donne une carte à un seul sommet et
+sept faces.
+
+\subsection{Définition}
+
+La duale de $(D,\sigma,\alpha)$ est $(D,\varphi,\alpha)$. Avec la convention
+$\varphi=\sigma\circ\alpha$, la face de la duale est
+$\varphi\circ\alpha=\sigma$, puisque $\alpha$ est une involution. Passer deux fois
+au dual ramène donc exactement à la carte de départ :
+\[
+  (D,\ \sigma,\ \alpha)\ \longleftrightarrow\ (D,\ \sigma\circ\alpha,\ \alpha).
+\]
+L'orientation est conservée : $\sigma$ et $\varphi$ tournent dans le sens fixé
+par \spin.
+
+\subsection{L'exemple}
+
+La duale de la version graphe a pour rotation $\sigma_d=\varphi_g$, un seul cycle
+de douze brins. Ses faces sont les cycles de $\varphi_d=\sigma_d\circ\alpha$, qui
+redonnent les sept boucles de la version graphe.
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+  \toprule
+  & Version graphe & Version duale \\
+  \midrule
+  rotation $\sigma$ & $(0)(1\,5\,11)(2\,4)(3)(6\,8\,10)(7)(9)$ & $(0\,1\,2\,\dots\,11)$ \\
+  arêtes $\alpha$ & $(0\,11)(1\,4)(2\,3)(5\,10)(6\,7)(8\,9)$ & les mêmes \\
+  faces $\varphi$ & $(0\,1\,2\,\dots\,11)$ & $(0)(1\,5\,11)(2\,4)(3)(6\,8\,10)(7)(9)$ \\
+  $V-E+F$ & $7-6+1=2$ & $1-6+7=2$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Les sept faces de la duale sont les régions délimitées par les arêtes autour de
+l'unique sommet. Elles correspondent une à une aux nœuds de l'arbre : $(0)$ au
+document, $(1\,5\,11)$ à \balise{html}, $(2\,4)$ à \balise{head}, $(3)$ à
+\balise{title}, $(6\,8\,10)$ à \balise{body}, $(7)$ à \balise{h1} et $(9)$ à
+\balise{p}.
+
+Reste à réaliser cette duale dans le pavage, sans changer de jeu de tuiles.
+C'est l'objet de la règle \papin.
+
+% =========================================================================
+\section{\texorpdfstring{\papin}{(pa)(pin)}, atome de dualité}\label{s:papin}
+
+La règle \papin\ change l'orientation d'une seule tuile \CONNECT. Elle agit sur
+la carte comme une transposition, et l'appliquer à toutes les tuiles \CONNECT\
+en un seul pas réalise le passage au dual.
+
+\subsection{La règle}
+
+Dans une tuile \CONNECT, les arcs changent de coins et la barre noire change de
+diagonale (figure~\ref{f:papin}). La bande qui joignait deux coins opposés joint
+désormais les deux autres. Le nom de l'élément reste attaché à la barre.
+
+\begin{figure}[ht]
+  \centering
+  \fig{fig-papin}
+  \caption{La règle \papin\ sur une tuile \CONNECT. La lettre \emph{p} est le
+    nom générique de la barre noire.}
+  \label{f:papin}
+\end{figure}
+
+Les quatre côtés restent traversés dans les deux orientations. La règle de Wang
+est donc préservée : \papin\ est une règle de réécriture locale, qui transforme
+un pavage valide en un pavage valide.
+
+Le nom vient du robinet de Denis Papin, qui fonctionne exactement sur ce
+principe. La récurrence du \emph{p} fait de \emph{p} le nom générique posé sur
+l'arête noire de \CONNECT.
+
+\subsection{Effet sur la carte}
+
+Soit une barre d'extrémités $x$ et $y$, donc une arête $(x\;y)$ de $\alpha$.
+Appliquer \papin\ à sa tuile laisse $\alpha$ inchangée et remplace la rotation
+par
+\[
+  \sigma' = \sigma\circ(x\;y).
+\]
+Composer par une transposition change le nombre de cycles de $\pm1$. Dans le
+pavage, la règle soit fusionne deux boucles rouges en une, soit en coupe une en
+deux. Appliquée deux fois, elle ramène la tuile à son état initial.
+
+\subsection{Toutes les tuiles à la fois}
+
+Les arêtes de $\alpha$ sont des transpositions disjointes : elles commutent et
+leur produit est $\alpha$. Appliquer \papin\ à toutes les tuiles \CONNECT, dans
+n'importe quel ordre, donne
+\[
+  \sigma\circ\prod_{(x\,y)\in\alpha}(x\;y) = \sigma\circ\alpha = \varphi .
+\]
+La nouvelle rotation est l'ancienne face : c'est exactement la dualité du
+§\ref{s:dualite}. Le symbole \spin\ n'est pas touché, donc l'orientation est la
+même des deux côtés.
+
+\subsection{L'exemple}
+
+Partant de la version graphe, chacun des six retournements fusionne deux
+boucles. On passe de 7 boucles rouges à 1, et d'une face à 7
+(figure~\ref{f:versions}). Les sept petites boucles des nœuds ont disparu : il
+reste une boucle unique, et sept régions séparées par les barres.
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{.45\textwidth}\centering
+    \fig{fig-graphe}\caption{Version graphe}
+  \end{subfigure}\hfill
+  \begin{subfigure}{.45\textwidth}\centering
+    \fig{fig-disque-pavage}\caption{Version disque}
+  \end{subfigure}
+  \caption{\papin\ appliquée aux six tuiles \CONNECT\ : de sept boucles à une.}
+  \label{f:versions}
+\end{figure}
+
+% =========================================================================
+\section{Version disque : Poincaré et géodésiques injectives}\label{s:disque}
+
+Après \papin\ sur toutes les tuiles \CONNECT, l'unique boucle rouge est l'horizon
+d'un disque de Poincaré. Les barres noires en sont les géodésiques intérieures,
+sans autre intersection que l'horizon. C'est la forme canonique d'un XML.
+
+\subsection{Le disque}
+
+On place $2n$ points ordonnés sur le cercle unité, l'horizon. Chaque point est
+l'extrémité d'une et une seule arête. Chaque arête est un arc de cercle
+orthogonal à l'horizon, ou un diamètre si ses extrémités sont antipodales.
+
+Les arêtes sont \emph{injectives} : elles ne se croisent pas, et ne rencontrent
+l'horizon qu'en leurs extrémités. Pour figurer le chevauchement des barres de
+\CONNECT, chaque géodésique déborde légèrement de l'horizon, perpendiculairement
+au cercle (figure~\ref{f:poincare}).
+
+\begin{figure}[ht]
+  \centering
+  \fig{fig-poincare}
+  \caption{L'exemple jouet en disque de Poincaré : six géodésiques intérieures
+    injectives. Les positions $0$ à $11$ se lisent dans le sens de \spin\ à
+    partir du haut.}
+  \label{f:poincare}
+\end{figure}
+
+\subsection{Le lien canonique avec XML}
+
+Les douze brins de l'exemple sont les douze points de l'horizon, parcourus dans
+le sens de \spin\ à partir du haut. La rotation $\sigma_d=(0\,1\,2\,\dots\,11)$
+est l'ordre de lecture des balises. L'involution $\alpha$ apparie chaque balise
+ouvrante à sa fermante.
+
+\begin{center}
+\begin{tabular}{@{}lc@{}}
+  \toprule
+  Balises & Positions \\
+  \midrule
+  \balise{<html>} \dots\ \balise{</html>}   & $0$ -- $11$ \\
+  \balise{<head>} \dots\ \balise{</head>}   & $1$ -- $4$ \\
+  \balise{<title>} \dots\ \balise{</title>} & $2$ -- $3$ \\
+  \balise{<body>} \dots\ \balise{</body>}   & $5$ -- $10$ \\
+  \balise{<h1>} \dots\ \balise{</h1>}       & $6$ -- $7$ \\
+  \balise{<p>} \dots\ \balise{</p>}         & $8$ -- $9$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Pour une carte à un seul sommet, être planaire équivaut à avoir des arêtes qui ne
+se croisent pas. Or un appariement non croisé de positions est exactement un mot
+bien parenthésé, c'est-à-dire une suite de balises correctement imbriquées. Un
+XML bien formé à $n$ éléments est donc un disque à $2n$ points et $n$ géodésiques
+intérieures injectives, et réciproquement.
+
+Ces objets sont comptés par le nombre de Catalan $C_n$, comme les arbres plans à
+$n$ arêtes. Pour l'exemple, $C_6=132$.
+
+\subsection{Les régions}
+
+Les six géodésiques découpent le disque en sept régions, les faces $\varphi_d$
+du §\ref{s:dualite}. La région bordée par l'arc de l'horizon entre 11 et 0 est
+celle du document.
+
+Chaque nom est posé du côté de la région que son élément délimite. Pour
+\balise{html}, ce côté est vers l'intérieur du disque, puisque le côté horizon
+appartient au document.
+
+% =========================================================================
+\section{Existence d'une déformation continue}\label{s:deformation}
+
+Le pavage en version disque et le disque de Poincaré du §\ref{s:disque} sont
+reliés par une isotopie du plan. La preuve combine le théorème de
+Jordan--Schoenflies et un lemme de redressement des cordes, démontré par
+récurrence. Une animation de cette correspondance accompagne le
+papier\,\footnote{\url{\urlanimation}}.
+
+\subsection{Énoncé}
+
+Notons $\Gamma$ l'unique boucle rouge du pavage, et $b_1,\dots,b_n$ les barres
+noires restreintes à leur portion comprise entre leurs deux points de
+chevauchement avec $\Gamma$.
+
+\begin{theoreme}\label{t:deformation}
+Il existe une isotopie $(h_t)_{t\in[0,1]}$ d'homéomorphismes du plan, avec
+$h_0=\mathrm{id}$, telle que $h_1(\Gamma)$ soit l'horizon et que chaque
+$h_1(b_k)$ soit la géodésique de même paire. L'orientation fixée par \spin\ est
+préservée.
+\end{theoreme}
+
+\subsection{Préliminaires}
+
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{$\Gamma$ est une courbe de Jordan.} C'est une boucle unique
+    (§\ref{s:papin}), simple car les courbes rouges sont disjointes
+    (§\ref{s:tuiles}), et lisse par morceaux.
+  \item \emph{Les barres sont des cordes intérieures.} Une courbe rouge sépare
+    deux coins exactement quand leurs marques diffèrent, et le bord de la région
+    pavée est « dehors ». Les coins « dedans » sont donc dans le domaine borné
+    $U$ de $\Gamma$. Après \papin, la bande de chaque \CONNECT\ joint deux coins
+    « dedans », donc chaque $b_k$ est un arc simple intérieur à $U$, d'extrémités
+    sur $\Gamma$.
+  \item \emph{Les barres sont disjointes}, chacune étant intérieure à sa tuile.
+  \item \emph{L'ordre des extrémités} le long de $\Gamma$, dans le sens de
+    \spin, est $\sigma_d$, et leur appariement est $\alpha$.
+\end{enumerate}
+
+\subsection{Lemme de redressement}
+
+\begin{lemme}\label{l:redressement}
+Soient deux familles de $n$ cordes disjointes d'un disque fermé, ayant les mêmes
+extrémités et le même appariement. Il existe un homéomorphisme du disque, fixant
+son bord point par point, qui envoie la première famille sur la seconde.
+\end{lemme}
+
+\begin{proof}
+Par récurrence sur $n$. Pour $n=0$, l'identité convient. Pour $n\ge1$, un
+appariement non croisé contient une paire d'extrémités consécutives sur le bord ;
+soit $c$ la corde correspondante dans la première famille, et $c'$ dans la
+seconde.
+
+Chacune découpe le disque en deux disques fermés, et le petit côté ne contient
+aucune autre corde. On fixe un homéomorphisme de $c$ sur $c'$ qui fixe les
+extrémités. Avec l'identité sur le bord, il définit un homéomorphisme entre les
+bords de chaque côté, que Schoenflies étend aux disques. On obtient $H_1$, qui
+fixe le bord et envoie $c$ sur $c'$.
+
+Les $n-1$ autres cordes, transportées par $H_1$, et celles de la seconde famille
+sont alors des cordes du grand côté de $c'$, avec les mêmes extrémités et le même
+appariement. L'hypothèse de récurrence donne $H_2$ sur ce côté, fixant son bord,
+que l'on prolonge par l'identité sur le petit côté. $H_2\circ H_1$ convient.
+\end{proof}
+
+\subsection{Preuve du théorème}
+
+\begin{proof}[Preuve du théorème~\ref{t:deformation}]
+\leavevmode
+\begin{enumerate}[label=\arabic*.]
+  \item \emph{Arrondir $\Gamma$.} Par Schoenflies, un homéomorphisme $F$ du plan
+    envoie $\Gamma$ sur le cercle unité et $U$ sur le disque ouvert. Quitte à le
+    composer avec une symétrie, $F$ préserve l'orientation, donc le sens de
+    \spin.
+  \item \emph{Répartir les extrémités.} $F$ envoie les $2n$ extrémités sur le
+    cercle, dans le même ordre cyclique. Un homéomorphisme croissant du cercle
+    les envoie sur les $2n$ points réguliers de l'horizon ; on le prolonge
+    radialement en un homéomorphisme $G$ du plan.
+  \item \emph{Redresser les cordes.} Les images $G\circ F(b_k)$ et les
+    géodésiques forment deux familles de cordes disjointes, de mêmes extrémités
+    et de même appariement $\alpha$. Le lemme~\ref{l:redressement} donne un
+    homéomorphisme $H$ du disque fixant le cercle, prolongé par l'identité à
+    l'extérieur.
+  \item \emph{Déformer.} $h=H\circ G\circ F$ est un homéomorphisme du plan qui
+    préserve l'orientation et réalise l'énoncé. Tout tel homéomorphisme est
+    isotope à l'identité (résultat classique ; référence à fixer), ce qui
+    fournit $(h_t)$.\qedhere
+\end{enumerate}
+\end{proof}
+
+\subsection{Conséquences}
+
+La preuve n'utilise du pavage que $\sigma_d$ et $\alpha$. À isotopie près, le
+dessin est donc entièrement déterminé par la suite des balises du document.
+
+\begin{remarque}
+L'animation interpole les points en ligne droite entre le pavage et le disque.
+Elle montre la correspondance, mais ne garantit pas l'absence de croisement à
+chaque instant : c'est l'isotopie $(h_t)$ qui en tient lieu.
+\end{remarque}
+
+% =========================================================================
+\section{Conclusion et perspectives}
+
+Neuf tuiles de Wang, une orientation posée dans le vide et une règle locale
+suffisent à représenter un document XML et sa forme duale. La version graphe est
+le dessin spontané de l'arbre. La version disque est sa forme canonique, et une
+isotopie du plan relie le pavage au disque de Poincaré.
+
+Le pavage permet aussi des tuiles \CONNECT\ dont la bande est extérieure à
+l'horizon. Elles donnent des géodésiques extérieures, donc le double disque, les
+mots à deux types de parenthèses et les cartes planaires générales. C'est l'objet
+du papier~II, d'où la numérotation de ce titre, à la manière de de~Bruijn pour
+ses deux articles sur les pavages de Penrose.
+
+Le texte des éléments, porté par les courbes rouges, est traité dans le papier
+compagnon sur le langage de messagerie.
+
+\section*{Références (à vérifier)}
+\begingroup\sloppy
+
+\begin{itemize}[leftmargin=*]
+  \item S.~Truchet, \emph{Mémoire sur les combinaisons}, Mémoires de l'Académie
+    royale des sciences, 1704.
+  \item C.~S.~Smith, \emph{The Tiling Patterns of Sebastien Truchet and the
+    Topology of Structural Hierarchy}, Leonardo, 1987.
+  \item H.~Wang, \emph{Proving theorems by pattern recognition~II}, Bell System
+    Technical Journal, 1961.
+  \item N.~G.~de~Bruijn, \emph{Algebraic theory of Penrose's non-periodic
+    tilings of the plane, I} et \emph{II}, Indagationes Mathematicae, 1981.
+  \item P.~Lienhardt, travaux sur les cartes combinatoires et généralisées de
+    dimension~$n$.
+  \item T.~H.~Nelson, travaux sur le projet Xanadu.
+  \item Théorème de Jordan--Schoenflies, et isotopie à l'identité des
+    homéomorphismes du plan préservant l'orientation : références à fixer.
+\end{itemize}
+\endgroup
+
+\end{document}

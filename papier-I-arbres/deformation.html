@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Déformation continue — pavage et disque</title>
+<!--
+  Pavages de Smith et hypertexte bidimensionnel. I. Arbres — §7.
+  Fichier autonome : tout est calculé ici à partir de l'arbre XML de l'exemple
+  jouet, par la même lecture par les coins que commun/pavage.py (version disque :
+  arcs des tuiles CONNECT centrés sur les coins « dehors »).
+  L'animation interpole les points en ligne droite ; elle montre la
+  correspondance, l'existence de la déformation relève du théorème 1.
+-->
+<style>
+:root{--fond:#fbfaf7;--texte:#1a1a1a;--texte2:#555;--rouge:#d85a30;--bord:#d9d6cf;--surface:#fff}
+@media (prefers-color-scheme:dark){:root{--fond:#1b1b1a;--texte:#eeece6;--texte2:#aaa79f;--rouge:#e8774f;--bord:#3a3936;--surface:#252523}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--texte);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
+h1{font-size:20px;margin:0 0 4px;font-weight:600}
+p{margin:4px 0 0;color:var(--texte2)}
+svg{display:block;width:100%;height:auto;margin-top:16px;background:var(--surface);border:1px solid var(--bord);border-radius:10px}
+.rouge{fill:none;stroke:var(--rouge);stroke-width:2.5;stroke-linejoin:round}
+.barre{fill:none;stroke:var(--texte);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.etiq{font:12px system-ui,sans-serif;fill:var(--texte2);text-anchor:middle;dominant-baseline:central}
+.spin{fill:none;stroke:var(--texte);stroke-width:2}
+.commandes{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:13px;color:var(--texte2)}
+button{font:inherit;color:var(--texte);background:var(--surface);border:1px solid var(--bord);border-radius:8px;padding:5px 14px;cursor:pointer}
+input[type=range]{flex:1;accent-color:var(--rouge)}
+footer{margin-top:18px;font-size:13px;color:var(--texte2)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Du pavage au disque de Poincaré</h1>
+  <p>L'exemple jouet <code>&lt;html&gt;&lt;head&gt;&lt;title/&gt;&lt;/head&gt;&lt;body&gt;&lt;h1/&gt;&lt;p/&gt;&lt;/body&gt;&lt;/html&gt;</code>
+     en version disque : l'unique boucle rouge devient l'horizon, chaque barre noire la géodésique de même paire.</p>
+  <svg id="sv" viewBox="0 0 680 420" role="img" aria-label="Déformation du pavage en version disque vers le disque de Poincaré">
+    <defs><marker id="pointe" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+    <path id="boucle" class="rouge"/>
+    <g id="barres"></g>
+    <g id="etiquettes"></g>
+    <g id="spin" style="color:var(--texte)"><path class="spin" marker-end="url(#pointe)"/></g>
+  </svg>
+  <div class="commandes">
+    <button id="lecture">Lecture</button>
+    <span>Pavage</span><input type="range" id="t" min="0" max="1000" value="0" aria-label="Avancement de la déformation"><span>Disque</span>
+  </div>
+  <footer>Pavages de Smith et hypertexte bidimensionnel. I.&nbsp;Arbres — P.&nbsp;Gradit, §7.
+    L'interpolation est linéaire ; elle illustre la correspondance, sans garantir l'absence de croisement à chaque instant.</footer>
+</main>
+<script>
+"use strict";
+// ---- Données : l'arbre de l'exemple jouet ------------------------------------
+const L = 5, H = 6;                                   // pavage en tuiles
+const NOEUDS = {document:[1,2], html:[2,3], head:[3,2], title:[4,1], body:[3,4], h1:[4,5], p:[2,5]};
+const ARETES = [["document","html"],["html","head"],["head","title"],["html","body"],["body","h1"],["body","p"]];
+const PAIRES = {html:[0,11], head:[1,4], title:[2,3], body:[5,10], h1:[6,7], p:[8,9]};
+
+// ---- Géométrie de l'écran ---------------------------------------------------
+const S = 60, X0 = 190, Y0 = 30;                      // tuile, origine du pavage
+const CX = 340, CY = 210, R = 160;                    // disque
+const ECART = 10, DEBORD = 8, PAS = 16;
+const PI = Math.PI;
+const px = (c, r) => [X0 + c * S, Y0 + r * S];        // coin (c, r) -> écran
+
+// ---- Lecture par les coins, version disque ---------------------------------
+const cle = (c, r) => c + "," + r;
+const dedans = new Set(Object.values(NOEUDS).map(([c, r]) => cle(c, r)));
+const areteDe = {};
+for (const [pa, en] of ARETES) {
+  const a = NOEUDS[pa], b = NOEUDS[en];
+  areteDe[[cle(...a), cle(...b)].sort().join("|")] = en;
+}
+
+const segs = [];      // {a, b, pts:[...], nom?}  a, b : milieux de côtés (clés)
+const barres = [];    // {nom, centre, ext:[coin1, coin2]}
+for (let r = 0; r < H; r++) for (let c = 0; c < L; c++) {
+  const K = {TL:[c,r], TR:[c+1,r], BL:[c,r+1], BR:[c+1,r+1]};
+  const ins = Object.keys(K).filter(k => dedans.has(cle(...K[k])));
+  const M = {N:[2*c+1,2*r], S:[2*c+1,2*r+2], O:[2*c,2*r+1], E:[2*c+2,2*r+1]};
+  const COTES = {TL:["N","O"], TR:["N","E"], BL:["S","O"], BR:["S","E"]};
+  const mpx = m => [X0 + m[0] * S / 2, Y0 + m[1] * S / 2];
+  const arc = (k, nom) => {                            // quart de cercle centré au coin k
+    const [a, b] = COTES[k], P = mpx(M[a]), Q = mpx(M[b]), C = px(...K[k]);
+    const t1 = Math.atan2(P[1]-C[1], P[0]-C[0]);
+    let d = Math.atan2(Q[1]-C[1], Q[0]-C[0]) - t1;
+    d = ((d + PI) % (2*PI) + 2*PI) % (2*PI) - PI;      // sens court
+    const pts = [];
+    for (let i = 0; i <= PAS; i++) pts.push([C[0] + S/2*Math.cos(t1 + d*i/PAS), C[1] + S/2*Math.sin(t1 + d*i/PAS)]);
+    segs.push({a: M[a].join(), b: M[b].join(), pts, nom});
+  };
+  const droit = (a, b) => {
+    const P = mpx(M[a]), Q = mpx(M[b]), pts = [];
+    for (let i = 0; i <= PAS; i++) pts.push([P[0] + (Q[0]-P[0])*i/PAS, P[1] + (Q[1]-P[1])*i/PAS]);
+    segs.push({a: M[a].join(), b: M[b].join(), pts});
+  };
+  const n = ins.length, tous = Object.keys(K);
+  if (n === 0 || n === 4) continue;
+  if (n === 1 || n === 3) { arc(n === 1 ? ins[0] : tous.find(k => !ins.includes(k))); continue; }
+  const s = ins.slice().sort().join();
+  if (s === "TL,TR" || s === "BL,BR") { droit("O", "E"); continue; }
+  if (s === "BL,TL" || s === "BR,TR") { droit("N", "S"); continue; }
+  // CONNECT, version disque : arcs centrés sur les coins « dehors »
+  const nom = areteDe[ins.map(k => cle(...K[k])).sort().join("|")];
+  const dehors = tous.filter(k => !ins.includes(k));
+  dehors.forEach(k => arc(k, nom));
+  barres.push({nom, centre: [X0 + (c+.5)*S, Y0 + (r+.5)*S], pente: dehors.includes("TL") ? -45 : 45});
+}
+
+// ---- Parcours de l'unique boucle -------------------------------------------
+const adj = {};
+segs.forEach((s, i) => { (adj[s.a] = adj[s.a] || []).push(i); (adj[s.b] = adj[s.b] || []).push(i); });
+let pts = [], croisements = [];                        // {i: indice dans pts, nom}
+{
+  const depart = segs[0].a; let ici = depart, prec = -1, garde = 0;
+  do {
+    const k = adj[ici].find(j => j !== prec);
+    const s = segs[k], sens = s.a === ici ? s.pts : s.pts.slice().reverse();
+    const base = pts.length;
+    for (let i = 0; i < PAS; i++) pts.push(sens[i]);
+    if (s.nom) croisements.push({i: base + PAS/2, nom: s.nom});
+    ici = s.a === ici ? s.b : s.a; prec = k;
+  } while (ici !== depart && ++garde < 1000);
+}
+const N = pts.length;
+// orientation : sens horaire à l'écran (somme de Gauss positive, y vers le bas)
+let aire = 0;
+for (let i = 0; i < N; i++) { const p = pts[i], q = pts[(i+1) % N]; aire += p[0]*q[1] - q[0]*p[1]; }
+if (aire < 0) { pts = pts.map((_, i) => pts[(N - i) % N]); croisements.forEach(x => x.i = (N - x.i) % N); }
+croisements.sort((x, y) => x.i - y.i);
+// position 0 : la première extrémité de html, telle que la suivante soit head
+const nb = croisements.length;
+const s0 = croisements.findIndex((x, k) => x.nom === "html" && croisements[(k + nb - 1) % nb].nom === "html");
+const pos = croisements.map((_, k) => croisements[(s0 + k) % nb]);   // pos[p] = croisement de position p
+pos.forEach((x, p) => console.assert(PAIRES[x.nom].includes(p), "position inattendue", x.nom, p));
+
+// ---- Correspondance boucle -> horizon ---------------------------------------
+const M_PAR = 40, T = [], D = [];
+const angle = p => -PI/2 + p * PI/6;                   // 0 en haut, sens horaire
+for (let p = 0; p < nb; p++) {
+  const a = pos[p].i, b = pos[(p+1) % nb].i, n = (b - a + N) % N;
+  for (let m = 0; m < M_PAR; m++) {
+    const f = a + n*m/M_PAR, i0 = Math.floor(f), w = f - i0, P = pts[i0 % N], Q = pts[(i0+1) % N];
+    T.push([P[0] + (Q[0]-P[0])*w, P[1] + (Q[1]-P[1])*w]);
+    const ph = angle(p + m/M_PAR); D.push([CX + R*Math.cos(ph), CY + R*Math.sin(ph)]);
+  }
+}
+
+// ---- Barres et géodésiques --------------------------------------------------
+const NB = 30, BT = [], BD = [], ET = [], ED = [];
+const lisible = a => { while (a > 90) a -= 180; while (a <= -90) a += 180; return a; };
+for (const nom in PAIRES) {
+  const [i, j] = PAIRES[nom], A = pts[pos[i].i], B = pts[pos[j].i];
+  const br = barres.find(b => b.nom === nom), C = br.centre;
+  const deb = P => [C[0] + (P[0]-C[0])*.307/.207, C[1] + (P[1]-C[1])*.307/.207];  // la barre dépasse l'arc
+  const bt = [deb(A)];
+  for (let m = 0; m <= NB; m++) bt.push([A[0] + (B[0]-A[0])*m/NB, A[1] + (B[1]-A[1])*m/NB]);
+  bt.push(deb(B)); BT.push(bt);
+  // étiquette dans le pavage : parallèle à la barre, décalée vers le haut
+  const o = br.pente === -45 ? [ECART/Math.SQRT2, -ECART/Math.SQRT2] : [-ECART/Math.SQRT2, -ECART/Math.SQRT2];
+  ET.push({x: C[0] + o[0], y: C[1] + o[1], a: br.pente === -45 ? 45 : -45});
+  // géodésique
+  const u = p => [Math.cos(angle(p)), Math.sin(angle(p))], a = u(i), b = u(j);
+  const dot = a[0]*b[0] + a[1]*b[1], c = [(a[0]+b[0])/(1+dot), (a[1]+b[1])/(1+dot)], rr = Math.hypot(a[0]-c[0], a[1]-c[1]);
+  const ta = Math.atan2(a[1]-c[1], a[0]-c[0]);
+  let dt = Math.atan2(b[1]-c[1], b[0]-c[0]) - ta; dt = ((dt + PI) % (2*PI) + 2*PI) % (2*PI) - PI;
+  const g = []; for (let m = 0; m <= NB; m++) g.push([CX + R*(c[0] + rr*Math.cos(ta + dt*m/NB)), CY + R*(c[1] + rr*Math.sin(ta + dt*m/NB))]);
+  BD.push([[CX + (R+DEBORD)*a[0], CY + (R+DEBORD)*a[1]], ...g, [CX + (R+DEBORD)*b[0], CY + (R+DEBORD)*b[1]]]);
+  // étiquette sur le disque : au milieu, du côté de la région de l'élément
+  const k = NB/2, mm = g[k], tx = g[k+1][0]-g[k-1][0], ty = g[k+1][1]-g[k-1][1], nt = Math.hypot(tx, ty);
+  let nx = -ty/nt, ny = tx/nt; const h = u((i+j)/2);
+  if (nx*(CX + R*h[0] - mm[0]) + ny*(CY + R*h[1] - mm[1]) < 0) { nx = -nx; ny = -ny; }
+  ED.push({x: mm[0] + ECART*nx, y: mm[1] + ECART*ny, a: lisible(Math.atan2(ty, tx)*180/PI)});
+}
+// note : à l'écran y descend, donc la pente « -45 » du repère mathématique se lit +45° ici.
+
+// ---- Rendu ------------------------------------------------------------------
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const gB = $("barres"), gE = $("etiquettes");
+const elB = BT.map(() => { const e = document.createElementNS(NS, "path"); e.setAttribute("class", "barre"); gB.append(e); return e; });
+const noms = Object.keys(PAIRES);
+const elE = noms.map(n => { const e = document.createElementNS(NS, "text"); e.setAttribute("class", "etiq"); e.textContent = n; gE.append(e); return e; });
+const mix = (P, Q, t) => P.map((p, i) => [p[0] + (Q[i][0]-p[0])*t, p[1] + (Q[i][1]-p[1])*t]);
+const chemin = a => a.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join("");
+const spinT = [X0 + S/2, Y0 + S/2], spinD = [CX - R - 60, CY - R + 20];
+function spin(x, y) {                                   // ⥁ : cercle presque fermé, sens horaire
+  const r = 11, a0 = -100*PI/180, a1 = a0 + 320*PI/180;
+  const P = [x + r*Math.cos(a0), y + r*Math.sin(a0)], Q = [x + r*Math.cos(a1), y + r*Math.sin(a1)];
+  return `M${P[0].toFixed(1)} ${P[1].toFixed(1)}A${r} ${r} 0 1 1 ${Q[0].toFixed(1)} ${Q[1].toFixed(1)}`;
+}
+function rendu(t) {
+  $("boucle").setAttribute("d", chemin(mix(T, D, t)) + "Z");
+  BT.forEach((bt, k) => elB[k].setAttribute("d", chemin(mix(bt, BD[k], t))));
+  noms.forEach((_, k) => {
+    const a = ET[k], b = ED[k];
+    const da = b.a - a.a;                               // les deux angles sont lisibles : on finit à l'endroit
+    elE[k].setAttribute("transform", `translate(${(a.x + (b.x-a.x)*t).toFixed(1)} ${(a.y + (b.y-a.y)*t).toFixed(1)}) rotate(${(a.a + da*t).toFixed(1)})`);
+  });
+  $("spin").firstElementChild.setAttribute("d", spin(spinT[0] + (spinD[0]-spinT[0])*t, spinT[1] + (spinD[1]-spinT[1])*t));
+}
+const curseur = $("t"), bouton = $("lecture");
+curseur.addEventListener("input", () => rendu(curseur.value / 1000));
+let lecture = false, sens = 1, avant = null;
+function pas(ts) {
+  if (!lecture) return;
+  if (avant === null) avant = ts;
+  let v = curseur.value/1000 + sens*(ts - avant)/2500; avant = ts;
+  if (v >= 1) { v = 1; sens = -1; } if (v <= 0) { v = 0; sens = 1; }
+  curseur.value = Math.round(v*1000); rendu(v); requestAnimationFrame(pas);
+}
+bouton.addEventListener("click", () => {
+  lecture = !lecture; bouton.textContent = lecture ? "Pause" : "Lecture";
+  if (lecture) { avant = null; requestAnimationFrame(pas); }
+});
+rendu(0);
+</script>
+</body>
+</html>

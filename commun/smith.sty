@@ -1,0 +1,62 @@
+% smith.sty — tuiles de Smith et conventions communes
+% Série « Pavages de Smith et hypertexte bidimensionnel »
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{smith}[2026/10/23 Tuiles de Smith, (pa)(pin), spin du vide]
+
+\RequirePackage{tikz}
+\RequirePackage{xcolor}
+\usetikzlibrary{arrows.meta}
+
+% --- Couleurs -------------------------------------------------------------
+\definecolor{smithrouge}{HTML}{D85A30}
+\definecolor{smithnoir}{HTML}{1A1A1A}
+\definecolor{smithgrille}{HTML}{C8C8C8}
+
+% --- Styles ---------------------------------------------------------------
+% Dimensions exprimées pour une tuile de côté 1.
+\tikzset{
+  smith/courbe/.style={draw=smithrouge, line width=1.1pt, line cap=round},
+  smith/barre/.style ={draw=smithnoir,  line width=1.2pt, line cap=round},
+  smith/grille/.style={draw=smithgrille, line width=0.3pt},
+  smith/horizon/.style={draw=smithrouge, line width=1.1pt},
+  smith/etiquette/.style={font=\scriptsize\sffamily, inner sep=0pt,
+                          text=smithnoir!75},
+}
+
+% --- Tuiles ---------------------------------------------------------------
+% Chaque macro dessine une tuile de côté 1 centrée à l'origine, rotation 0.
+% Usage : \begin{scope}[shift={(x,y)}, rotate=r] \tuileconnect \end{scope}
+% Rotations : connect {0,90}, virage {0,90,180,270}, droit {0,90}.
+%
+% CONNECT (0) : arcs centrés en haut-gauche et bas-droite ;
+%   la barre noire est portée par cette diagonale et chevauche les deux arcs
+%   (paramètre 0.283 à 0.717), sans atteindre les coins.
+\newcommand{\tuileconnect}{%
+  \path[smith/courbe] (0,.5)  arc[start angle=0,   end angle=-90, radius=.5];
+  \path[smith/courbe] (0,-.5) arc[start angle=180, end angle=90,  radius=.5];
+  \path[smith/barre]  (-.217,.217) -- (.217,-.217);}
+\newcommand{\tuilevirage}{%
+  \path[smith/courbe] (0,.5) arc[start angle=0, end angle=-90, radius=.5];}
+\newcommand{\tuiledroit}{%
+  \path[smith/courbe] (-.5,0) -- (.5,0);}
+\newcommand{\tuilevide}{}
+\newcommand{\tuilecadre}{%
+  \path[smith/grille] (-.5,-.5) rectangle (.5,.5);}
+
+% --- Spin du vide : U+2941, flèche circulaire fermée, sens horaire ---------
+% Dessinée en TikZ pour ne dépendre d'aucune police.
+\newcommand{\spinpic}[2][1]{% #1 = échelle, #2 = position
+  \begin{scope}[shift={#2}, scale=#1]
+    \draw[smithnoir, line width=.9pt, -{Stealth[length=2.8pt,width=3pt]}]
+      (100:.22) arc[start angle=100, end angle=-220, radius=.22];
+  \end{scope}}
+\DeclareRobustCommand{\spin}{\tikz[baseline=-.6ex]{\spinpic[.6]{(0,0)}}}
+
+% --- Notations ------------------------------------------------------------
+\DeclareRobustCommand{\papin}{(\textit{pa})(\textit{pin})}
+\newcommand{\CONNECT}{\textsc{connect}}
+\newcommand{\VIRAGE}{\textsc{virage}}
+\newcommand{\DROIT}{\textsc{droit}}
+\newcommand{\VIDE}{\textsc{vide}}
+
+\endinput
