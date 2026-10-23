@@ -5,12 +5,17 @@ de Ted Nelson (Xanadu), construite sur les pavages de Truchet–Smith.
 
 | Papier | Sujet | Source | Animation |
 | --- | --- | --- | --- |
+| 0. Messagerie | langage de messagerie au caractère, transclusion 2D, hashes, opérateurs `@>` et `@>>`, Akoma Ntoso | [`papier-0-messagerie/messagerie.tex`](papier-0-messagerie/messagerie.tex) | — |
 | I. Arbres | XML, version graphe, dualité par (pa)(pin), disque de Poincaré, déformation continue | [`papier-I-arbres/arbres.tex`](papier-I-arbres/arbres.tex) | [`deformation.html`](papier-I-arbres/deformation.html) |
 | II. (à venir) | géodésiques extérieures, double disque, cartes planaires | — | — |
 
 ## Organisation
 
 ```
+papier-0-messagerie/
+  messagerie.tex   le papier compagnon : langage de messagerie (pdfLaTeX)
+  reference/
+    expansion.py   interpréteur de référence, vérifie rendus et hashes
 commun/
   smith.sty        tuiles en TikZ, spin du vide, notation (pa)(pin)
   pavage.py        lecture par les coins : arbre -> pavage, contrôles
