@@ -15,6 +15,8 @@ c'est la raison du passage à deux dimensions.
 Il peut y avoir de multiples plans, de multiples sphères, avec des hyperliens
 entre eux. Mais chaque plan sait où est soi.
 
+## Papiers
+
 | Papier | Sujet | Source | Animation |
 | --- | --- | --- | --- |
 | 0. Messagerie | langage de messagerie au caractère, transclusion 2D, hashes, opérateurs `@>` et `@>>`, Akoma Ntoso | [`papier-0-messagerie/messagerie.tex`](papier-0-messagerie/messagerie.tex) | — |
