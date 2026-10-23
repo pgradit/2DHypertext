@@ -1,0 +1,3 @@
+# Compilation : latexmk   (pdfLaTeX, deux passes gérées par latexmk)
+$pdf_mode = 1;
+@default_files = ('messagerie.tex');
